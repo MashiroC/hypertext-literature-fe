@@ -1,9 +1,8 @@
 import VueRouter from 'vue-router'
 
-import Vue from 'vue'
 
-import Home from './components/Home'
-import Book from './components/Book'
+import Home from './page/Home'
+import Book from './page/Book'
 
 const router = new VueRouter({
         routes: [{
@@ -11,8 +10,12 @@ const router = new VueRouter({
             name: 'Home',
             component: Home
         },{
+            path:'/book/:id/:slice',
+            name:'BookSlice',
+            component:Book,
+        },{
             path:'/book/:id',
-            name:'Book',
+            name:'BookHome',
             component:Book,
         }
         ]

@@ -24,6 +24,8 @@ Vue.component("vue-markdown",VueMarkdown);
 
 Vue.component('v-chart', ECharts);
 
+// Vue.prototype.apiDomain = "/api";
+Vue.prototype.apiDomain = "http://"
 // Vue.use(VueFreemde);
 
 Vue.use(VueRouter);
