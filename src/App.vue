@@ -10,7 +10,7 @@
                 active-text-color="#ffd04b">
             <el-menu-item v-for="item in pages" :key='item.value' :index="item.path">{{item.name}}
             </el-menu-item>
-           <el-menu-item style="float: right" index="/login">
+            <el-menu-item style="float: right" index="/login">
                 Login
             </el-menu-item>
             <el-menu-item style="float: right" index="/signup">
@@ -29,7 +29,7 @@
         data() {
             return {
                 pages: [
-                    {name: "Home",path:"/", active: false},
+                    {name: "Home", path: "/", active: false},
                     // {name: "Shop", active: false}
                 ],
                 username: undefined,
@@ -65,4 +65,6 @@
         color: #2c3e50;
         margin-top: 60px;
     }
+
+
 </style>

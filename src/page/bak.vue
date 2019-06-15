@@ -2,14 +2,17 @@
     <div style="width: 100%;">
         <div style="display: flex;justify-items: flex-start">
             <div class="map" ref="map">
-                <v-graph id="test" :gData="graphData" :onActive.sync="activeNode"/>
+                <div ref="echart" style="width:100%">
+                    <!--<div id="chart" style="width:100%;height:1000px" @click="mouseTest" :options="mapOptions" :notMerge="true" auto-resize-->
+                    <!--:style="{width: '100%'}"></div>-->
+                    <div id="chart" style="width:100%;height:500px"></div>
+                </div>
             </div>
             <div class="slice" ref="slice">
                 <div>
                     <div class="title">{{title}}</div>
                     <div class="content">
-                        <!--<vue-markdown id="md" :source="text"></vue-markdown>-->
-                        <mavon-editor v-model="text" :subfield="false" defaultOpen="preview" :toolbarsFlag="false" :boxShadow="false" :editable="false"/>
+                        <vue-markdown id="md" :source="text"></vue-markdown>
                     </div>
                     <div class="choose">
                         <div v-for="ch in firstChoose" :key="ch.value" class="choose_item">
@@ -34,8 +37,8 @@
             </div>
         </div>
         <div>
-            <el-button @click="goOut">回去</el-button>
-            <el-button @click="goIn">出来</el-button>
+            <el-button @click="test1">回去</el-button>
+            <el-button @click="test2">出来</el-button>
         </div>
     </div>
 </template>
@@ -59,22 +62,101 @@
         data() {
             return {
                 chart: "",
-                activeNode: 6,
                 fictionId: null,
                 title: "",
                 text: "",
                 rootId: null,
                 choose: [],
                 edges: [],
-                graphData: ""
+                mapOptions: {
+                    title: {
+                        text: '章节地图'
+                    },
+                    tooltip: {},
+                    animationDurationUpdate: 1500,
+                    animationEasingUpdate: 'quinticInOut',
+                    series: [
+                        {
+                            clickable:true,
 
+                            type: 'graph',
+                            layout: 'none',
+                            symbolSize: 50,
+                            // roam: true,
+                            color: ['#c23531', '#2f4554', '#61a0a8', '#d48265', '#91c7ae', '#749f83', '#ca8622', '#bda29a', '#6e7074', '#546570', '#c4ccd3'],
+                            label: {
+
+                                normal: {
+                                    show: true,
+
+                                }
+                            },
+                            edgeSymbol: ['circle', 'arrow'],
+                            edgeSymbolSize: [4, 10],
+                            edgeLabel: {
+                                normal: {
+
+                                    textStyle: {
+                                        fontSize: 20
+                                    }
+                                }
+                            },
+                            itemLabel:{
+                                clickable:true,
+
+                            },
+                            data: [],
+                            links: [],
+                            // links: [],
+                            itemStyle: {
+                                normal: {
+                                    color: "green"
+                                }
+                            },
+                            lineStyle: {
+                                normal: {
+                                    opacity: 0.9,
+                                    width: 2,
+                                    curveness: 0
+                                }
+                            }
+                        }
+                    ]
+                }
             }
         },
         mounted: function () {
-            let route = this.$route;
+            this.initCharts();
+            let route = this.$route
             this.refreshData(route)
+            // this.echarts.on("click",this.mouseTest)
         },
         methods: {
+            initCharts: function () {
+                this.chart = this.$Echarts.init(document.getElementById("chart"));
+                this.chart.setOption(this.mapOptions, true);
+                this.chart.on("click", this.mouseTest);
+                this.chart.on("hover",(param) => function(){
+                    console.log(param);
+                    console.log("on")
+                    let sliceId = param.data.sliceId;
+                    if (sliceId !== undefined) {
+                        let fictionId = this.$route.params.id
+                        this.$router.push({name: "BookSlice", params: {id: fictionId, slice: sliceId}})
+                    }
+                });
+            },
+            mouseTest: function (param) {
+
+                //TODO
+                console.log(param);
+                let sliceId = param.data.sliceId;
+                if (sliceId !== undefined) {
+                    let fictionId = this.$route.params.id;
+                    this.$router.push({name: "BookSlice", params: {id: fictionId, slice: sliceId}})
+                }
+
+            },
             refreshContent: function (fictionId, sliceId) {
                 let url2 = this.apiDomain + "/fiction/" + fictionId + "/" + sliceId;
                 this.$http.get(url2).then((resp) => {
@@ -82,66 +164,66 @@
                     this.text = resp.body.data.text;
                 })
                 this.sortChoose(this.edges, sliceId);
-                sessionStorage.setItem("readFictionId", fictionId);
+                sessionStorage.setItem("readFictionId", fictionId)
                 sessionStorage.setItem("readSliceId", sliceId);
-                this.activeNode = sliceId;
-                this.sliceId = sliceId;
+
+                let node = this.mapOptions.series[0].data;
+                let tmp = this.mapOptions.series[0];
+                for (let i = 0; i < node.length; i++) {
+                    // console.log(node[i].sliceId)
+                    if (node[i].sliceId === sliceId) {
+                        tmp.data[i].itemStyle={color:"red"}
+                    } else {
+                        tmp.data[i].itemStyle={color:"blue"};
+                    }
+                }
+                this.mapOptions.series[0] = tmp;
+
+                this.chart.setOption(this.mapOptions, true);
+                console.log(JSON.stringify(this.mapOptions.series[0].data));
+                console.log(JSON.stringify(this.mapOptions.series[0].links));
+
             },
             refreshData: function (val) {
-
                 let id = val.params.id;
                 let slice = val.params.slice;
+                this.fictionId = id;
                 let readFictionId = sessionStorage.getItem("readFictionId");
                 let readSliceId = sessionStorage.getItem("readSliceId");
 
-                let book = JSON.parse(sessionStorage.getItem("book" + id));
+                if (slice === undefined) {
+                    //打开序章
+                    let book = JSON.parse(sessionStorage.getItem("book" + id));
 
+                    this.rootId = book.prologurId;
 
-                //没graph数据的情况下 应该是用户刷新了页面 从新渲染图和当前数据
-                if (this.graphData === "") {
-                    this.newFiction(val);
+                    let url = this.apiDomain + "/fiction/" + book.id;
 
+                    this.$http.get(url).then((resp) => {
+                        let tmp = resp.body.data;
+                        this.edges = tmp;
+                        this.sortMap(tmp, book.prologurId);
+                        // sessionStorage.setItem("mapNode",JSON.stringify(this.mapOptions.series[0].data))
+                        // sessionStorage.setItem("mapEdge",JSON.stringify(this.mapOptions.series[0].links))
+
+                        //拿到序章
+                        this.refreshContent(id, book.prologurId);
+                    })
                 } else {
-                    //有graph数据
-
-                    // 小说id一样 并没有换小说
-                    if (id === this.fictionId) {
-                        this.activeNode = slice;
+                    // this.mapOptions.series[0].data=JSON.parse(sessionStorage.getItem("mapNode"));
+                    if (readFictionId == id) {
+                        //读的是一本书，只换content
+                        let url = this.apiDomain + "/fiction/" + id + "/" + slice;
+                        this.$http.get(url).then((resp) => {
+                            let data = resp.body.data;
+                            this.refreshContent(id, slice);
+                        })
                     } else {
-                      this.newFiction(val);
+                        //换书了
                     }
-                    // console.log(slice)
-                    // this.activeNode = slice;
                 }
+                let url = this.apiDomain + "/fictions/" + id;
 
-            },
-            newFiction:function(val){
-                let id = val.params.id;
-                let slice = val.params.slice;
-
-                let book = JSON.parse(sessionStorage.getItem("book" + id));
-
-
-                this.fictionId = id;
-                this.rootId = book.prologurId;
-
-                //小说id不一样 换了小说 重新渲染map
-                let url = this.apiDomain + "/fiction/" + book.id;
-
-                this.$http.get(url).then((resp) => {
-                    let tmp = resp.body.data;
-                    this.edges = tmp;
-                    this.sortMap(tmp, this.rootId);
-
-                    //如果slice为空 就去渲染序章
-                    if (slice === undefined) {
-                        this.activeNode = this.rootId;
-                    } else {
-                        //不为空 就渲染当前章
-                        this.activeNode = slice;
-                    }
-
-                })
             },
             sortChoose: function (arr, id) {
                 this.choose = [];
@@ -152,6 +234,7 @@
                         this.choose.push({name: arr[i].choose, to: toId})
                     }
                 }
+
             },
             sortMap: function (arr, pos) {
                 let nodeTmp = [];
@@ -228,18 +311,15 @@
                 }
 
                 let nodes = [];
+
                 for (let i = pos; i < nodeTmp.length; i++) {
                     if (nodeTmp[i] !== undefined) {
                         nodes.push(nodeTmp[i])
                     }
                 }
 
-
-                let data = {node: nodes, links: edges};
-                this.graphData = data;
-                // this.graphData.node = nodes;
-                // this.graphData.links = edges;
-                // console.log(this.graphData)
+                this.mapOptions.series[0].data = nodes;
+                this.mapOptions.series[0].links = edges;
                 return nodeTmp;
 
             },
@@ -252,39 +332,10 @@
                 this.$refs.map.style.marginLeft = "0";
                 // this.$refs.echart.style.display=null;
                 this.$refs.slice.style.width = "50%";
-            },
-            pushRoute(r) {
-                this.$router.push(r)
             }
         },
         watch: {
-            '$route': ["refreshData"],
-            activeNode: {
-                handler(val) {
-                    let fictionId = this.$route.params.id;
-                    let sliceId = this.$route.params.slice;
-                    if (val === sliceId) {
-                        console.log("没变")
-                        //章节没变 不push route
-                    } else if (val === this.rootId) {
-                        console.log("fiction一样")
-                        //章节和序章一样但是和route不一样
-                        if (val !== sliceId) {
-                            let r = {name: 'BookSlice', params: {id: fictionId, slice: val}}
-                            this.pushRoute(r)
-                        }
-                    } else {
-                        //新章节
-                        let r = {name: 'BookSlice', params: {id: fictionId, slice: val}}
-                        console.log("push");
-                        this.pushRoute(r);
-                    }
-                    this.refreshContent(fictionId, val)
-
-                    // this.refreshContent(fictionId,val);
-
-                }
-            }
+            '$route': ["refresh"]
         }
 
     }
@@ -294,7 +345,7 @@
     .map {
         width: 50%;
         margin-left: 0;
-        height: 500px;
+        height: 1000px;
         -webkit-transition: all 1s;
     }
 

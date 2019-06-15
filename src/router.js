@@ -3,6 +3,9 @@ import VueRouter from 'vue-router'
 
 import Home from './page/Home'
 import Book from './page/Book'
+import test from './page/test'
+import markdown from './page/markdown'
+
 
 const router = new VueRouter({
         routes: [{
@@ -17,6 +20,14 @@ const router = new VueRouter({
             path:'/book/:id',
             name:'BookHome',
             component:Book,
+        },{
+            path:'/test',
+            name:'test',
+            component:test,
+        },{
+            path:'/md',
+            name:'md',
+            component:markdown,
         }
         ]
     })

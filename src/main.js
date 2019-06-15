@@ -11,21 +11,30 @@ import VueMarkdown from 'vue-markdown'
 import ElementUI from 'element-ui'
 import './plugins/element.js'
 
-import ECharts from 'vue-echarts'
+import ECharts from 'echarts'
 import 'echarts-gl'
+import Graph from "./components/Graph";
 
+import './assets/global.css'
 
-// import VueFreemde from 'vue-freemde';
+import mavonEditor from 'mavon-editor'
+import 'mavon-editor/dist/css/index.css'
 
+Vue.component("mdtest",mavonEditor);
+
+Vue.use(mavonEditor)
 
 Vue.config.productionTip = false;
 
 Vue.component("vue-markdown",VueMarkdown);
 
-Vue.component('v-chart', ECharts);
+// Vue.component('v-chart', ECharts);
+Vue.component("v-graph",Graph);
+
+Vue.prototype.$Echarts = ECharts;
 
 // Vue.prototype.apiDomain = "/api";
-Vue.prototype.apiDomain = "http://"
+Vue.prototype.apiDomain = "http://localhost:8080"
 // Vue.use(VueFreemde);
 
 Vue.use(VueRouter);

@@ -12,10 +12,13 @@
     "echarts": "^4.2.1",
     "echarts-gl": "^1.1.1",
     "element-ui": "latest",
+    "mavon-editor": "^2.7.5",
+    "postcss-import": "^12.0.1",
     "vue": "^2.6.10",
     "vue-echarts": "^4.0.3",
     "vue-freemde": "^0.1.0",
     "vue-markdown": "^2.2.4",
+    "vue-meditor": "^1.2.1",
     "vue-resource": "^1.5.1",
     "vue-router": "^3.0.6"
   },
