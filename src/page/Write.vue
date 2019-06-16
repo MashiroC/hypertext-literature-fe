@@ -2,7 +2,7 @@
     <div style="width:100%">
         <div style="width:100%" class="flex-left">
             <div style="width:50%;height:500px">
-                <v-graph id="test" :gData="graphData" :onActive.sync="activeNode"/>
+                <v-graph id="test" :gData="graphData" :onActive.sync="activeNode" :pos="rootId" :enable-click="false"/>
             </div>
             <div class="slice" ref="slice">
                 <mavon-editor style="height:100%;width:100%" v-model="text" :toolbars="toolbar" @save="saveText"/>
@@ -21,30 +21,13 @@
         name: "App",
         data() {
             return {
+                rootId: "",
                 activeNode: 6,
                 choose: "",
                 fictionId: null,
                 title: "",
                 text: "",
-                graphData: {
-                    links: [{"source": "支线1", "target": "支线3"}, {"source": "序章", "target": "支线2"}, {
-                        "source": "序章",
-                        "target": "支线1"
-                    }, {"source": "支线2", "target": "支线3"}],
-                    node: [{"x": 100, "y": 100, "sliceId": 5, "name": "序章", "itemStyle": {"color": "red"}}, {
-                        "x": 300,
-                        "y": 100,
-                        "sliceId": 6,
-                        "name": "支线1",
-                        "itemStyle": {"color": "blue"}
-                    }, {"x": 300, "y": 300, "sliceId": 7, "name": "支线2", "itemStyle": {"color": "blue"}}, {
-                        "x": 500,
-                        "y": 100,
-                        "sliceId": 8,
-                        "name": "支线3",
-                        "itemStyle": {"color": "blue"}
-                    }]
-                },
+                graphData: "",
                 toolbar: {
                     bold: true, // 粗体
                     italic: true,// 斜体
@@ -71,31 +54,95 @@
         },
         computed: {},
         mounted: function () {
+            this.fictionId = this.$route.params.fictionId;
             this.initText();
+            this.initMap();
             // let route = this.$route
             // this.refreshData(route)
         },
         methods: {
             initText: function () {
                 // localStorage.clear();
-                let cacheText = localStorage.getItem("cacheText");
+                let cacheText = localStorage.getItem("cacheText" + this.fictionId);
                 if (cacheText !== null) {
-                    this.text=cacheText;
+                    this.text = cacheText;
                 }
+            },
+            initMap: function () {
+                let id = this.$route.params.fictionId;
+                console.log(id);
+
+                let book = JSON.parse(sessionStorage.getItem("book" + id));
+
+                this.fictionId = id;
+                this.rootId = book.prologurId;
+
+                //小说id不一样 换了小说 重新渲染map
+                let url = this.apiDomain + "/fiction/" + book.id;
+
+                this.$http.get(url).then((resp) => {
+                    let tmp = resp.body.data;
+                    console.log(tmp);
+                    //去掉选项传给图组件
+                    for (let i = 0; i < tmp.length; i++) {
+                        // tmp[i].choose = undefined;
+                    }
+                    this.edges = tmp;
+
+                    //传节点名字
+                    let tmpTitle = [];
+                    let url = this.apiDomain + "/fiction/" + id + "/nodes";
+
+                    //需要给地图详细信息的情况下
+                    this.$http.get(url).then((resp) => {
+                        let nodes = resp.body.data;
+                        for (let i = 0; i < nodes.length; i++) {
+                            tmpTitle[nodes[i].id] = {title: nodes[i].title};
+                        }
+                        let testData = {graph: tmp, nodeTitle: tmpTitle};
+                        this.graphData = testData;
+                        //如果slice为空 就去渲染序章
+                        // if (slice === undefined) {
+                        //     this.activeNode = this.rootId;
+                        // } else {
+                        //     //不为空 就渲染当前章
+                        //     this.activeNode = slice;
+                        // }
+                    });
+
+
+                    //如果slice为空 就去渲染序章
+                    // if (slice === undefined) {
+                    //     this.activeNode = this.rootId;
+                    // } else {
+                    //     //不为空 就渲染当前章
+                    //     this.activeNode = slice;
+                    // }
+
+                })
             },
             //保存草稿
             saveText: function () {
-                localStorage.setItem("cacheText", this.text);
+                localStorage.setItem("cacheText" + this.fictionId, this.text);
                 this.$message({
                     message: '本地草稿保存成功',
                     type: 'success'
                 });
+            },
+            reloadPage: function () {
+                location.reload();
             }
         },
         components: {
             // MarkDown
         },
         watch: {
+            $route: {
+                handler(val) {
+                    console.log(val)
+                    this.reloadPage()
+                }
+            },
             activeNode: {
                 handler(val) {
                     //点了导航地图 刷新数据

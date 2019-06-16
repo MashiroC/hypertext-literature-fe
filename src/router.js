@@ -5,11 +5,12 @@ import Home from './page/Home'
 import Book from './page/Book'
 import test from './page/test'
 import markdown from './page/markdown'
+import Write from "./page/Write";
 
 
 const router = new VueRouter({
         routes: [{
-            path: '/',
+            path: '',
             name: 'Home',
             component: Home
         },{
@@ -21,13 +22,17 @@ const router = new VueRouter({
             name:'BookHome',
             component:Book,
         },{
-            path:'/test',
+            path:'test',
             name:'test',
             component:test,
         },{
-            path:'/md',
+            path:'md',
             name:'md',
             component:markdown,
+        },{
+            path:'/Write/:fictionId',
+            name:'Write',
+            component:Write,
         }
         ]
     })
